@@ -1,0 +1,48 @@
+**********************************************************Mapper version 1**************************************************
+
+Para usar el mapper correctamente se debera seguir ciertas normas a la hora de crear los objects, tanto entidades como DTO.
+Estas deberan llevar el mismo nombre con diferencia de DTO, un ejemplo:
+
+Usuario - Clase Entidad
+UsuarioDTO - Clase DTO
+
+***************************************************************************************************************************
+Forma de uso :
+
+**Resultado simple para convertir Entidad a DTO**
+Mapper.Map(Entidad,typeof(EntidadDTO));
+
+O de esta manera
+
+Entidad.Map(typeof(EntidadDTO));
+
+para convertir de DTO a Entidad usar
+
+Mapper.MapDTO(EntidadDTO,typeof(Entidad));
+
+O
+
+EntidadDTO.MapDTO(typeof(Entidad));
+
+***************************************************************************************************************************
+
+**Resultados en lista**
+
+NOTA: Importante que siempre que sea lista, momentaneamente debe ser List, y no interfaz.
+Se arreglara esa opcion en la proxima versión.
+
+Mapper.MapList(ListaEntidad,typeof(List<ListaEntidadDTO>));
+
+O
+
+ListaEntidad.MapList(typeof(List<ListaEntidad>));
+
+En viceversa
+
+Mapper.MapDTOList(ListaEntidadDTO,typeof(List<ListaEntidad>));
+
+O
+
+ListaEntidadDTO.MapList(typeof(List<ListaEntidad>));
+
+***************************************************************************************************************************

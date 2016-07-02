@@ -22,22 +22,10 @@ namespace ConsoleApplication1
             listOfObjects.Add(objeto);
 
             /*Convetimos Entidad a DTO*/
-            var resultado = listOfObjects.MapList(typeof(List<UsuarioDTO>));
+            List<UsuarioDTO> resultado = listOfObjects.MapList();
 
-            /*Otra forma de convertir*/
-            /*
-                 * var resultado = Mapper.MapList(listOfObjects, typeof(List<UsuarioDTO>));
-                 * 
-             */
-
-            /*Convetimos DTO a Entidad*/
-            var otro = ((IList<UsuarioDTO>) resultado).MapDTOList(typeof(List<Usuario>));
-
-            /*Otra forma de convertir*/
-            /*
-                * var resultado = Mapper.MapDTOList(listOfObjects, typeof(List<Usuario>));
-                * 
-            */
+            /*Convertimos DTO a Entidad*/
+            var otro = resultado.MapDTOList();
 
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.Green;
