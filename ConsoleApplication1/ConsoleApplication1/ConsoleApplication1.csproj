@@ -43,8 +43,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DTO\EntregaViewModel.cs" />
     <Compile Include="DTO\EntregaDTO.cs" />
     <Compile Include="DTO\PerfilDTO.cs" />
+    <Compile Include="DTO\PerfilViewModel.cs" />
+    <Compile Include="DTO\UsuarioViewModel.cs" />
     <Compile Include="DTO\UsuarioDTO.cs" />
     <Compile Include="Entidades\Entrega.cs" />
     <Compile Include="Entidades\Perfil.cs" />

@@ -3,11 +3,25 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 
 namespace ConsoleApplication1
 {
+    public class MapperConfiguration
+    {
+        public string Name { get; set; }
+    }
+    
     public static class Mapper
     {
+        private static MapperConfiguration _mapperConfiguration = new MapperConfiguration { Name = "DTO" };
+
+        public static void ConfigureMapper(MapperConfiguration mapperConfiguration)
+        {
+            //_mapperConfiguration.Name = mapperConfiguration.Name;
+            _mapperConfiguration = mapperConfiguration;
+        }
+        
         #region Formula 1
 
         /*Metodo para mapear simples objects*/
@@ -18,30 +32,72 @@ namespace ConsoleApplication1
             if (source == null )
                 return null;
 
+            //Donde almacenaremos el tipo de destino
             Type destinyType = null;
+
+            //Obtenemos todas las clases
+            var classList = Assembly.GetExecutingAssembly().GetTypes();
+
+            //Obtenemos las properties del source
+            var propertiesSource = source.GetType().GetProperties();
+
+            //Si no podemos obtener clases o properties
+            if ( propertiesSource == null || classList == null )
+            {
+                return new Exception("Error al obtener clases o properties desde el assembly");
+            }
 
             if (source.GetType().ToString().Contains("Collection"))
             {
-                destinyType = Assembly.GetExecutingAssembly().GetTypes().FirstOrDefault(
-                    m => m.Name.Contains(source.GetType().GetProperties().FirstOrDefault().Name + "DTO"));
+                if (source.GetType().Name.Contains("ViewModel") || source.GetType().Name.Contains("DTO") || source.GetType().Name.Contains(_mapperConfiguration.Name))
+                {
+                    var firstTest = Regex.Split(propertiesSource.FirstOrDefault().Name, "ViewModel")[0];
+                    if (string.IsNullOrEmpty(firstTest))
+                    {
+                        firstTest = "DTO";
+                    }
+                    else
+                    {
+                        firstTest = "ViewModel";
+                    }
 
-            } else
+                    destinyType = classList.FirstOrDefault(
+                        m => m.Name.Contains(Regex.Split(propertiesSource.FirstOrDefault().Name,firstTest)[0] + _mapperConfiguration.Name));
+                }
+                else
+                {
+                    destinyType = classList.FirstOrDefault(
+                        m => m.Name.Contains(propertiesSource.FirstOrDefault().Name + _mapperConfiguration.Name));
+                }
+            }
+            else
             {
-                destinyType = Assembly.GetExecutingAssembly().GetTypes().FirstOrDefault(
-                    m => m.Name.Contains(source.GetType().Name + "DTO"));
+                if (source.GetType().Name.Contains("ViewModel") || source.GetType().Name.Contains("DTO") || source.GetType().Name.Contains(_mapperConfiguration.Name))
+                {
+                    var firstTest = Regex.Split(source.GetType().Name, "ViewModel")[0];
+                    if (string.IsNullOrEmpty(firstTest))
+                    {
+                        firstTest = "DTO";
+                    } else
+                    {
+                        firstTest = "ViewModel";
+                    }
+
+                    destinyType = classList.FirstOrDefault(
+                        m => m.Name.Contains(Regex.Split(source.GetType().Name,firstTest)[0] + _mapperConfiguration.Name));
+                }
+                else
+                {
+                    destinyType = classList.FirstOrDefault(
+                        m => m.Name.Contains(source.GetType().Name + _mapperConfiguration.Name));
+                }
             }
 
             try
             {
 
-                //Obtenemos todas las clases
-                var classList = Assembly.GetExecutingAssembly().GetTypes();
-
                 //Creamos la instancia del object
                 var instance = Activator.CreateInstance(destinyType);
-
-                //Obtenemos las properties del source
-                var propertiesSource = source.GetType().GetProperties();
 
                 //Obtenemos las properties del object de destino
                 var propertyOfDestiny = instance.GetType().GetProperties();
@@ -60,7 +116,27 @@ namespace ConsoleApplication1
                             //En caso de ser lista
                             if (result.ToString().Contains("Collection"))
                             {
-                                var type = classList.FirstOrDefault(m => m.FullName.Contains(result.PropertyType.GetGenericArguments().Single().Name + "DTO"));
+                                Type type = null;
+
+                                if (result.PropertyType.GetGenericArguments().Single().Name.Contains("ViewModel") || result.PropertyType.GetGenericArguments().Single().Name.Contains("DTO") ||
+                                    result.PropertyType.GetGenericArguments().Single().Name.Contains(_mapperConfiguration.Name))
+                                {
+                                    var firstTest = Regex.Split(result.PropertyType.GetGenericArguments().Single().Name, "ViewModel")[0];
+                                    if (string.IsNullOrEmpty(firstTest))
+                                    {
+                                        firstTest = "DTO";
+                                    } else
+                                    {
+                                        firstTest = "ViewModel";
+                                    }
+
+                                    type = classList.FirstOrDefault(m => m.FullName.Contains(Regex.Split(result.PropertyType.GetGenericArguments().Single().Name,firstTest)[0] + _mapperConfiguration.Name));
+                                }
+                                else
+                                {
+                                    type = classList.FirstOrDefault(m => m.FullName.Contains(result.PropertyType.GetGenericArguments().Single().Name + _mapperConfiguration.Name));
+                                }
+
                                 if (type == null)
                                 {
                                     continue;
@@ -72,8 +148,29 @@ namespace ConsoleApplication1
                             }
                             else
                             {
-                                //En caso de ser un object
-                                var type = classList.FirstOrDefault(m => m.FullName.Contains(result.Name + "DTO"));
+                                Type type = null;
+                                if (result.Name.Contains("ViewModel") || result.Name.Contains("DTO") ||
+                                    result.Name.Contains(_mapperConfiguration.Name))
+                                {
+
+                                    var firstTest = Regex.Split(result.Name, "ViewModel")[0];
+                                    if (string.IsNullOrEmpty(firstTest))
+                                    {
+                                        firstTest = "DTO";
+                                    }
+                                    else
+                                    {
+                                        firstTest = "ViewModel";
+                                    }
+
+                                    //En caso de ser un object
+                                    type = classList.FirstOrDefault(m => m.FullName.Contains(Regex.Split(result.Name,firstTest)[0] + _mapperConfiguration.Name));
+                                }
+                                else
+                                {
+                                    //En caso de ser un object
+                                    type = classList.FirstOrDefault(m => m.FullName.Contains(result.Name + _mapperConfiguration.Name));
+                                }
                                 if (type == null)
                                 {
                                     continue;
@@ -118,8 +215,22 @@ namespace ConsoleApplication1
             {
                 foreach(var i in source)
                 {
-                    destinyType = Assembly.GetExecutingAssembly().GetTypes().FirstOrDefault(
-                    m => m.Name.Contains(i.GetType().Name + "DTO"));
+                    if ( i.GetType().Name.Contains("ViewModel") || i.GetType().Name.Contains("DTO") || i.GetType().Name.Contains(_mapperConfiguration.Name))
+                    {
+                        var firstTest = Regex.Split(i.GetType().Name, "ViewModel")[0];
+                        if (string.IsNullOrEmpty(firstTest))
+                        {
+                            firstTest = Regex.Split(i.GetType().Name, "DTO")[0];
+                        }
+
+                        destinyType = Assembly.GetExecutingAssembly().GetTypes().FirstOrDefault(
+                            m => m.Name.Contains(Regex.Split(i.GetType().Name, firstTest)[0] + _mapperConfiguration.Name));
+                    }
+                    else
+                    {
+                        destinyType = Assembly.GetExecutingAssembly().GetTypes().FirstOrDefault(
+                            m => m.Name.Contains(i.GetType().Name + _mapperConfiguration.Name));
+                    }
 
                     isCollection = true;
 
@@ -185,7 +296,7 @@ namespace ConsoleApplication1
         #region Formula 2
 
         /*Metodo para mapear simples objects*/
-        public static dynamic MapDTO<T>(this T source)
+        public static dynamic MapToEntity<T>(this T source)
             where T : class, new()
         {
             //Check for source
@@ -194,29 +305,34 @@ namespace ConsoleApplication1
 
             Type destinyType = null;
 
+            //Obtenemos todas las clases
+            var classList = Assembly.GetExecutingAssembly().GetTypes();
+
+            //Obtenemos las properties del source
+            var propertiesSource = source.GetType().GetProperties();
+
+            //Si no podemos obtener clases o properties
+            if ( propertiesSource == null || classList == null )
+            {
+                return new Exception("Error al obtener clases o properties desde el assembly");
+            }
+
             if (source.GetType().ToString().Contains("Collection"))
             {
-                destinyType = Assembly.GetExecutingAssembly().GetTypes().FirstOrDefault(
-                    m => m.Name.Contains(source.GetType().GetProperties().FirstOrDefault().Name.Split(new char[] { 'D', 'T', 'O' })[0]));
+                destinyType = classList.FirstOrDefault(
+                    m => m.Name.Contains(Regex.Split(propertiesSource.FirstOrDefault().Name,_mapperConfiguration.Name)[0]));
 
             }
             else
             {
-                destinyType = Assembly.GetExecutingAssembly().GetTypes().FirstOrDefault(
-                    m => m.Name.Contains(source.GetType().Name.Split(new char[] { 'D', 'T', 'O' })[0]));
+                destinyType = classList.FirstOrDefault(
+                    m => m.Name.Contains(Regex.Split(source.GetType().Name,_mapperConfiguration.Name)[0]));
             }
 
             try
             {
-
-                //Obtenemos todas las clases
-                var classList = Assembly.GetExecutingAssembly().GetTypes();
-
                 //Creamos la instancia del object
                 var instance = Activator.CreateInstance(destinyType);
-
-                //Obtenemos las properties del source
-                var propertiesSource = source.GetType().GetProperties();
 
                 //Obtenemos las properties del object de destino
                 var propertyOfDestiny = instance.GetType().GetProperties();
@@ -235,8 +351,8 @@ namespace ConsoleApplication1
                             //En caso de ser lista
                             if (result.ToString().Contains("Collection"))
                             {
-                                var type = classList.FirstOrDefault(m => m.FullName.Contains(result.PropertyType.GetGenericArguments()
-                                    .Single().Name.Split(new char[] { 'D', 'T', 'O' })[0]));
+                                var type = classList.FirstOrDefault(m => m.FullName.Contains(Regex.Split(result.PropertyType.GetGenericArguments()
+                                    .Single().Name,_mapperConfiguration.Name)[0]));
 
                                 if (type == null)
                                 {
@@ -245,19 +361,19 @@ namespace ConsoleApplication1
 
                                 var listInstance = (IList)typeof(List<>).MakeGenericType(type).GetConstructor(Type.EmptyTypes).Invoke(null);
 
-                                item.SetValue(instance, ((ICollection)result.GetValue(source)).MapDTOList());
+                                item.SetValue(instance, ((ICollection)result.GetValue(source)).MapToEntityList());
                             }
                             else
                             {
                                 //En caso de ser un object
-                                var type = classList.FirstOrDefault(m => m.FullName.Contains(result.Name.Split(new char[] { 'D', 'T', 'O' })[0]));
+                                var type = classList.FirstOrDefault(m => m.FullName.Contains(Regex.Split(result.Name,_mapperConfiguration.Name)[0]));
 
                                 if (type == null)
                                 {
                                     continue;
                                 }
 
-                                item.SetValue(instance, result.GetValue(source).MapDTO());
+                                item.SetValue(instance, result.GetValue(source).MapToEntity());
                             }
                         }
                         else
@@ -279,7 +395,7 @@ namespace ConsoleApplication1
         }
 
         /*Metodos para mapear listas*/
-        public static dynamic MapDTOList<T>(this T source)
+        public static dynamic MapToEntityList<T>(this T source)
             where T : ICollection
         {
 
@@ -298,7 +414,7 @@ namespace ConsoleApplication1
                 foreach (var i in source)
                 {
                     destinyType = Assembly.GetExecutingAssembly().GetTypes().FirstOrDefault(
-                    m => m.Name.Contains(i.GetType().Name.Split(new char[] { 'D', 'T', 'O' })[0]));
+                    m => m.Name.Contains(Regex.Split(i.GetType().Name,_mapperConfiguration.Name)[0]));
 
                     isCollection = true;
 
@@ -333,7 +449,7 @@ namespace ConsoleApplication1
                     {
                         if (i.GetType().ToString().Contains("Collection"))
                         {
-                            var mapped = ((ICollection)i).MapDTOList();
+                            var mapped = ((ICollection)i).MapToEntityList();
 
                             foreach (var item in mapped)
                             {
@@ -343,7 +459,7 @@ namespace ConsoleApplication1
                         }
                         else
                         {
-                            ((IList)list).Add(i.MapDTO());
+                            ((IList)list).Add(i.MapToEntity());
                         }
 
                     }

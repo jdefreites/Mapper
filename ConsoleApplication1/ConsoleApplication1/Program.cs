@@ -14,18 +14,49 @@ namespace ConsoleApplication1
             {
                 Id = 1,
                 Nombre = "Nicolas",
-                Perfil = new List<Perfil> { new Perfil { Tipo = "Normal", Entrega = new Entrega { Proveedor = "Nicolas" } }, new Perfil { Tipo = "Punchi", Entrega = new Entrega { Proveedor = "Jebus" } } }
+                Perfil = new List<Perfil> 
+                {
+                    new Perfil
+                    { 
+                        Tipo = "Normal",
+                        Entrega = new Entrega 
+                        {
+                            Proveedor = "Nicolas"
+                        }
+                    },
+                    new Perfil 
+                    {
+                        Tipo = "Punchi",
+                        Entrega = new Entrega 
+                        {
+                            Proveedor = "Jebus"
+                        }
+                    }
+                }
             };
 
             var listOfObjects = new List<Usuario>();
             listOfObjects.Add(objeto);
             listOfObjects.Add(objeto);
 
-            /*Convetimos Entidad a DTO*/
-            List<UsuarioDTO> resultado = listOfObjects.MapList();
+            //Inicializamos el mapper con nuestra configuracion para adaptarla a viewModel
+            Mapper.ConfigureMapper(new MapperConfiguration { Name = "ViewModel" });
 
-            /*Convertimos DTO a Entidad*/
-            var otro = resultado.MapDTOList();
+            /*Convetimos Entidad a DTO*/
+            List<UsuarioViewModel> resultadosViewModel = listOfObjects.MapList();
+
+            /*Convertimos los ViewModel a Entidades*/
+            List<Usuario> entidadesDeViewModel = resultadosViewModel.MapToEntityList();
+
+            /*
+            //Inicializamos el mapper con nuestra configuracion para adaptarla a DTOS
+            Mapper.ConfigureMapper(new MapperConfiguration { Name = "DTO" });
+
+            //Convertimos el resultado de ViewModels a DTO
+            List<UsuarioDTO> resultadosDTO = resultadosViewModel.MapList();
+
+            //Convetimos los DTO a entidad
+            var resultEntity = resultadosDTO.MapToEntityList();*/
 
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.Green;
