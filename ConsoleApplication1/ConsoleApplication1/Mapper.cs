@@ -10,6 +10,8 @@ namespace ConsoleApplication1
     public class MapperConfiguration
     {
         public string Name { get; set; }
+        public IList<string> AssemblyList { get; set; }
+        public List<Assembly> Classes { get; set; }
     }
     
     public static class Mapper
@@ -20,8 +22,62 @@ namespace ConsoleApplication1
         {
             //_mapperConfiguration.Name = mapperConfiguration.Name;
             _mapperConfiguration = mapperConfiguration;
+
+            if ( mapperConfiguration.AssemblyList != null)
+            {
+                foreach(var item in mapperConfiguration.AssemblyList)
+                {
+                    var assemblyTempList = Assembly.ReflectionOnlyLoad(item);
+                    _mapperConfiguration.Classes.Add(assemblyTempList);
+                }
+                
+            }
         }
-        
+
+        #region Mapper con configuracion
+
+        public static U MapProperty<T,U>(this T source, IDictionary<string,string> configurationMapper)
+            where T : class, new()
+            where U : class, new()
+        {
+            if ( source == null || configurationMapper == null)
+            {
+                return default(U);
+            }
+
+            /*Obtenemos las properties del object source*/
+            var sourceProperties = source.GetType().GetProperties();
+
+            var destinyInstance = Activator.CreateInstance(typeof(U));
+            var destinyProperties = destinyInstance.GetType().GetProperties();
+
+            foreach(var i in sourceProperties)
+            {
+                //Buscamos si la property que quiere copiar tiene source
+                var firstFind = configurationMapper.FirstOrDefault(m => m.Key.Contains(i.Name));
+                if (string.IsNullOrEmpty(firstFind.Key) || string.IsNullOrEmpty(firstFind.Value))
+                    continue;
+
+                var secondFind = destinyProperties.FirstOrDefault(m => m.Name.Contains(firstFind.Value));
+                if ( secondFind == null)
+                {
+                    continue;
+                }
+
+                if ( i.Name.Contains("Collection"))
+                {
+
+                }
+
+                secondFind.SetValue(destinyInstance, i.GetValue(source));
+
+            }
+
+            return (U)destinyInstance;
+        }
+
+        #endregion
+
         #region Formula 1
 
         /*Metodo para mapear simples objects*/
@@ -224,7 +280,7 @@ namespace ConsoleApplication1
                         }
 
                         destinyType = Assembly.GetExecutingAssembly().GetTypes().FirstOrDefault(
-                            m => m.Name.Contains(Regex.Split(i.GetType().Name, firstTest)[0] + _mapperConfiguration.Name));
+                            m => m.Name.Contains(firstTest + _mapperConfiguration.Name));
                     }
                     else
                     {
